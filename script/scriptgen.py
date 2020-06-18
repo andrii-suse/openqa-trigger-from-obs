@@ -570,6 +570,7 @@ done < <(sort __envsub/files_asset.lst)''', f)
     def gen_print_rsync_repo(self,f):
         print(cfg.header, file=f)
         if self.repos:
+            self.p(cfg.pre_rsync_repo(), f)
             self.p(cfg.rsync_repo1, f)
             for ren in self.renames:
                 self.p("        dest=${{dest//{}/{}}}".format(ren[0],ren[1]), f)

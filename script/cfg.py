@@ -97,6 +97,9 @@ for flavor in {FLAVORLIST,}; do
     done
 done'''
 
+def pre_rsync_repo():
+    pass
+
 rsync_repo1 = '''
 echo '# REPOOWNLIST'
 [ ! -f __envsub/files_iso.lst ] || buildid=$(cat __envsub/files_iso.lst | grep -E 'FLAVORORS' | grep -o -E '(Build|Snapshot)[^-]*' | head -n 1)
