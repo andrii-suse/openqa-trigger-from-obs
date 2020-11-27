@@ -7,9 +7,9 @@ for dir in "$@" ; do
 	# check if functions are implemented
 	[ -e "$dir"/print_rsync_repo.sh ] || continue
 	[ -e "$dir"/print_openqa.sh ] || continue
-	[ "(bash $dir/print_openqa.sh | wc -l)" -gt 1 ] || { >&2 echo "SKIP $dir" && continue; }
+	[ "$(bash $dir/print_openqa.sh | wc -l)" -gt 1 ] || { >&2 echo "SKIP $dir" && continue; }
 
-	lines=$(grep -v '^#' "$dir"/print_rsync_repo.sh | grep -v 'set -e' | grep -v '^[[:space:]]*$' | wc -l)
+	lines=$(bash "$dir"/print_rsync_repo.sh | grep -v '^#' | grep -v 'set -e' | grep -v '^[[:space:]]*$' | wc -l)
        	[ "$lines" != "0" ] || { >&2 echo "SKIP $dir"; continue; }
 
 	# Make sure that destination repo in print_rsync_repo.sh output
@@ -26,10 +26,11 @@ for dir in "$@" ; do
 
 	while read -r line; do
 	    if [[ "$line" =~ $regex ]]; then
-	        echo "$known_destination_repos" | grep -q "${BASH_REMATCH[1]}\$" || { >&2 echo "Destination REPO file wasnt found in print_rsync_repo output {${BASH_REMATCH[1]}}   {$known_destination_repos}"; : $((++errs)); continue 2; }
+            # we excuse REPO_0 if print_rsync_iso has bsdtar (which is indication that REPO_0 comes from print_rsync_iso)
+            echo "$known_destination_repos" | grep -q "${BASH_REMATCH[1]}\$" || ( [[ "$line" =~ REPO_0= ]] && grep -q bsdtar "$dir"/print_rsync_repo.sh ) || { >&2 echo "Destination REPO file wasnt found in print_rsync_repo output {${BASH_REMATCH[1]}}   {$known_destination_repos}"; : $((++errs)); continue 2; }
             checked=1
 	    fi
-	done < <(bash $dir/print_openqa.sh | grep REPO_ | grep -v REPO_0 | grep -v 'REPO_5=' | grep -v PACKAGES )
+	done < <(bash $dir/print_openqa.sh | grep REPO_ | grep -v 'REPO_5=' | grep -v PACKAGES )
 
 	[ "$checked" == 1 ] || { >&2 echo "No REPO found in openqa request - is something wrong?";  : $((++errs)); continue; }
 	>&2 echo "PASS $dir"
